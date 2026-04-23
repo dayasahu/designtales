@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 — Spring Data JPA ki Kahaani</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Tiro+Devanagari+Marathi:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5EFE0;
+    --paper-dark: #ECE3CE;
+    --paper-darker: #DCC9A6;
+    --ink: #1F1A14;
+    --ink-soft: #4A3E2E;
+    --ink-faint: #7A6A52;
+
+    --terracotta: #A8321E;
+    --terracotta-deep: #7A1F0F;
+    --moss: #4A5D3F;
+    --saffron: #D97706;
+    --ochre: #B88A3C;
+    --indigo: #2E3B5F;
+    --turmeric: #E8B84A;
+
+    --code-bg: #2B2418;
+    --code-text: #EDE2C7;
+    --code-comment: #8A7A5A;
+    --code-keyword: #D9905F;
+    --code-string: #A8BF70;
+    --code-annotation: #E8B84A;
+    --code-type: #8FB7E8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    background-image:
+      radial-gradient(circle at 15% 25%, rgba(184, 138, 60, 0.05) 0%, transparent 40%),
+      radial-gradient(circle at 85% 75%, rgba(168, 50, 30, 0.04) 0%, transparent 45%);
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0px, transparent 2px,
+        rgba(31, 26, 20, 0.01) 2px, rgba(31, 26, 20, 0.01) 3px);
+    z-index: 0;
+  }
+
+  .devanagari {
+    font-family: 'Tiro Devanagari Marathi', serif;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 70px 48px 120px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ---------- CHAPTER OPENER ---------- */
+  .chapter-opener {
+    text-align: center;
+    margin-bottom: 70px;
+    padding: 50px 0 40px;
+    border-top: 3px double var(--ink);
+    border-bottom: 3px double var(--ink);
+    position: relative;
+  }
+
+  .chapter-number {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 17px;
+    letter-spacing: 0.3em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  .chapter-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 62px;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+
+  .chapter-subtitle {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 24px;
+    color: var(--terracotta);
+  }
+
+  .chapter-subtitle .devanagari {
+    font-style: normal;
+    font-size: 26px;
+  }
+
+  .chapter-ornament {
+    font-size: 24px;
+    color: var(--ochre);
+    margin: 28px 0 10px;
+    letter-spacing: 0.5em;
+  }
+
+  .epigraph {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    text-align: center;
+    color: var(--ink-soft);
+    max-width: 540px;
+    margin: 0 auto 60px;
+    line-height: 1.55;
+  }
+
+  .epigraph-attr {
+    display: block;
+    margin-top: 10px;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+
+  /* ---------- OPENING ---------- */
+  .opening p:first-child::first-letter {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 92px;
+    float: left;
+    line-height: 0.85;
+    padding: 6px 12px 0 0;
+    color: var(--terracotta);
+  }
+
+  p { margin-bottom: 18px; }
+
+  /* ---------- HEADINGS ---------- */
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 38px;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    margin: 72px 0 8px;
+    color: var(--ink);
+  }
+
+  h2 .sect-num {
+    display: block;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--terracotta);
+    font-weight: 600;
+    font-family: 'IBM Plex Sans', sans-serif;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  h2 + .subhead {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 19px;
+    color: var(--ink-soft);
+    margin-bottom: 28px;
+  }
+
+  h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 24px;
+    margin: 40px 0 14px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ---------- CODE ---------- */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 22px 24px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 20px 0;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.15), 0 8px 24px rgba(31,26,20,0.12);
+    position: relative;
+  }
+
+  pre::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--terracotta), var(--turmeric), var(--moss));
+    border-radius: 4px 4px 0 0;
+    opacity: 0.75;
+  }
+
+  code { font-family: 'JetBrains Mono', monospace; font-size: 0.92em; }
+
+  p code, li code {
+    background: var(--paper-dark);
+    padding: 1px 6px;
+    border-radius: 3px;
+    color: var(--terracotta-deep);
+    font-weight: 500;
+    font-size: 0.88em;
+  }
+
+  pre code { background: transparent; color: inherit; padding: 0; }
+
+  .kw { color: var(--code-keyword); }
+  .an { color: var(--code-annotation); }
+  .st { color: var(--code-string); }
+  .cm { color: var(--code-comment); font-style: italic; }
+  .ty { color: var(--code-type); }
+
+  /* ---------- CHARACTER DIALOGUE ---------- */
+  .dialogue {
+    display: flex;
+    gap: 14px;
+    margin: 28px 0;
+    align-items: flex-start;
+  }
+
+  .dialogue-avatar {
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--paper-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--ink);
+  }
+
+  .dialogue-avatar svg { width: 52px; height: 52px; }
+
+  .dialogue-body {
+    flex: 1;
+    padding: 14px 18px;
+    background: var(--paper-dark);
+    border-radius: 8px;
+    position: relative;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .dialogue-body::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 18px;
+    border-width: 8px 8px 8px 0;
+    border-style: solid;
+    border-color: transparent var(--paper-dark) transparent transparent;
+  }
+
+  .dialogue-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+
+  .dialogue-name .devanagari {
+    font-weight: 400;
+    margin-left: 4px;
+    color: var(--ink-soft);
+  }
+
+  .dialogue-name .dialogue-role {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--ink-faint);
+    font-size: 13px;
+    margin-left: 8px;
+  }
+
+  .dialogue-body p { margin-bottom: 10px; font-size: 15px; }
+  .dialogue-body p:last-child { margin-bottom: 0; }
+
+  .dialogue-dada .dialogue-avatar { border-color: var(--indigo); background: rgba(46, 59, 95, 0.12); }
+  .dialogue-tanvi .dialogue-avatar { border-color: var(--saffron); background: rgba(217, 119, 6, 0.12); }
+  .dialogue-aaji .dialogue-avatar { border-color: var(--moss); background: rgba(74, 93, 63, 0.12); }
+  .dialogue-bugasur .dialogue-avatar { border-color: var(--terracotta); background: rgba(168, 50, 30, 0.12); }
+  .dialogue-chaiwala .dialogue-avatar { border-color: var(--ochre); background: rgba(184, 138, 60, 0.15); }
+
+  /* ---------- CALLOUTS ---------- */
+  .callout {
+    margin: 28px 0;
+    padding: 20px 24px 20px 64px;
+    border-radius: 3px;
+    position: relative;
+    line-height: 1.55;
+  }
+
+  .callout::before {
+    position: absolute;
+    left: 22px;
+    top: 18px;
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+
+  .callout-label {
+    display: block;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .callout-horror {
+    background: rgba(168, 50, 30, 0.08);
+    border-left: 4px solid var(--terracotta);
+  }
+  .callout-horror::before { content: '☠'; color: var(--terracotta); }
+  .callout-horror .callout-label { color: var(--terracotta-deep); }
+
+  .callout-tip {
+    background: rgba(74, 93, 63, 0.1);
+    border-left: 4px solid var(--moss);
+  }
+  .callout-tip::before { content: '✦'; color: var(--moss); font-size: 18px; }
+  .callout-tip .callout-label { color: var(--moss); }
+
+  .callout-warn {
+    background: rgba(232, 184, 74, 0.18);
+    border-left: 4px solid var(--turmeric);
+  }
+  .callout-warn::before { content: '⚠'; color: #8A6827; }
+  .callout-warn .callout-label { color: #8A6827; }
+
+  .callout-wisdom {
+    background: rgba(46, 59, 95, 0.07);
+    border-left: 4px solid var(--indigo);
+  }
+  .callout-wisdom::before { content: '◈'; color: var(--indigo); font-size: 16px; }
+  .callout-wisdom .callout-label { color: var(--indigo); }
+
+  /* ---------- CASE STUDY BOX ---------- */
+  .case-study {
+    margin: 40px 0;
+    padding: 0;
+    background: var(--paper-dark);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(31,26,20,0.08);
+  }
+
+  .case-study-header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 18px 26px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .case-study-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .case-study-icon {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+
+  .case-study-kicker {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .case-study-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
+    margin-top: 2px;
+  }
+
+  .case-study-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 4px 10px;
+    background: rgba(245, 239, 224, 0.15);
+    border-radius: 99px;
+    letter-spacing: 0.05em;
+  }
+
+  .case-study-body {
+    padding: 24px 26px;
+  }
+
+  .case-study-body p { font-size: 15px; line-height: 1.6; }
+  .case-study-body p:last-child { margin-bottom: 0; }
+
+  .case-study-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--paper);
+    border-radius: 4px;
+  }
+
+  .case-study-stat { text-align: center; }
+
+  .case-study-stat-num {
+    font-family: 'Fraunces', serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: var(--terracotta);
+    line-height: 1;
+  }
+
+  .case-study-stat-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---------- PULL QUOTE ---------- */
+  .pullquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 26px;
+    line-height: 1.35;
+    color: var(--ink);
+    text-align: center;
+    margin: 44px auto;
+    padding: 28px 40px;
+    max-width: 620px;
+    position: relative;
+    border-top: 1px solid var(--ink-soft);
+    border-bottom: 1px solid var(--ink-soft);
+  }
+
+  .pullquote-attr {
+    display: block;
+    font-size: 14px;
+    font-style: normal;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-top: 14px;
+  }
+
+  /* ---------- FIGURES ---------- */
+  figure { margin: 36px 0; text-align: center; }
+
+  figure svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+
+  figcaption {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+    line-height: 1.45;
+  }
+
+  figcaption .fig-label {
+    font-weight: 600;
+    color: var(--terracotta);
+    font-style: normal;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-right: 8px;
+  }
+
+  /* ---------- COMPARE ---------- */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 28px 0;
+    border: 1px solid var(--ink-soft);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .compare > div { padding: 20px 22px; }
+
+  .compare .bad {
+    background: rgba(168, 50, 30, 0.08);
+    border-right: 1px solid var(--ink-soft);
+  }
+
+  .compare .good { background: rgba(74, 93, 63, 0.08); }
+
+  .compare .header {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare .bad .header { color: var(--terracotta); }
+  .compare .good .header { color: var(--moss); }
+
+  .compare p { font-size: 14px; margin: 0; line-height: 1.5; }
+
+  /* ---------- HORROR ITEMS ---------- */
+  .horror-item {
+    margin: 22px 0;
+    padding: 18px 22px;
+    background: var(--paper-dark);
+    border-radius: 4px;
+    border-left: 3px solid var(--terracotta);
+  }
+
+  .horror-item h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--ink);
+  }
+
+  .horror-item h4 .hindi {
+    font-family: 'Tiro Devanagari Marathi', serif;
+    font-weight: 400;
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin-left: 8px;
+    font-style: italic;
+  }
+
+  .horror-item h4::before {
+    content: '№ ';
+    color: var(--terracotta);
+    font-style: italic;
+  }
+
+  .horror-item p { font-size: 15px; margin-bottom: 0; color: var(--ink-soft); line-height: 1.55; }
+
+  /* ---------- CHECKLIST ---------- */
+  .checklist {
+    background: var(--paper-dark);
+    padding: 28px 32px;
+    margin: 32px 0;
+    border-radius: 4px;
+  }
+
+  .checklist h3 {
+    margin-top: 0;
+    color: var(--terracotta);
+  }
+
+  .checklist ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  .checklist li {
+    padding-left: 30px;
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .checklist li::before {
+    content: '☐';
+    position: absolute;
+    left: 0;
+    top: -2px;
+    color: var(--terracotta);
+    font-size: 20px;
+  }
+
+  /* ---------- FOOTER ---------- */
+  .chapter-footer {
+    margin-top: 100px;
+    padding-top: 40px;
+    border-top: 1px solid var(--ink-soft);
+    text-align: center;
+  }
+
+  .footer-ornament {
+    color: var(--ochre);
+    font-size: 20px;
+    letter-spacing: 0.6em;
+    margin-bottom: 16px;
+  }
+
+  .footer-text {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 680px) {
+    .page { padding: 50px 22px 80px; }
+    .chapter-title { font-size: 44px; }
+    .chapter-subtitle { font-size: 19px; }
+    h2 { font-size: 28px; }
+    .pullquote { font-size: 20px; padding: 20px 24px; }
+    .compare { grid-template-columns: 1fr; }
+    .compare .bad { border-right: none; border-bottom: 1px solid var(--ink-soft); }
+    .opening p:first-child::first-letter { font-size: 72px; }
+    .case-study-header { flex-direction: column; align-items: flex-start; }
+    .dialogue-avatar { width: 52px; height: 52px; }
+    .dialogue-avatar svg { width: 42px; height: 42px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ========== CHAPTER OPENER ========== -->
+  <header class="chapter-opener">
+    <div class="chapter-number">Chapter Six</div>
+    <h1 class="chapter-title">Spring Data JPA</h1>
+    <div class="chapter-subtitle">ki <span class="devanagari">कहानी</span> — A Story in Four Disasters</div>
+    <div class="chapter-ornament">❦ ❦ ❦</div>
+  </header>
+
+  <p class="epigraph">
+    "Sir, it was working on my laptop."<br>
+    <em>— Every developer, five minutes before the postmortem</em>
+    <span class="epigraph-attr">Hinjewadi, 2023</span>
+  </p>
+
+  <!-- ========== CAST OF CHARACTERS ========== -->
+  <div style="background: var(--paper-dark); padding: 24px 28px; border-radius: 6px; margin-bottom: 50px;">
+    <h3 style="margin-top: 0; margin-bottom: 16px; font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft);">Our Cast</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 14px;">
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(46, 59, 95, 0.15); border: 2px solid var(--indigo); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg viewBox="0 0 40 40" width="34" height="34">
+            <circle cx="20" cy="14" r="6" fill="none" stroke="#2E3B5F" stroke-width="1.8"/>
+            <path d="M 14 8 Q 20 3 26 8" stroke="#2E3B5F" stroke-width="1.8" fill="none"/>
+            <line x1="20" y1="20" x2="20" y2="32" stroke="#2E3B5F" stroke-width="1.8"/>
+            <line x1="20" y1="24" x2="14" y2="28" stroke="#2E3B5F" stroke-width="1.8"/>
+            <line x1="20" y1="24" x2="26" y2="27" stroke="#2E3B5F" stroke-width="1.8"/>
+            <circle cx="17" cy="14" r="1" fill="#2E3B5F"/>
+            <circle cx="23" cy="14" r="1" fill="#2E3B5F"/>
+            <line x1="16" y1="18" x2="24" y2="18" stroke="#2E3B5F" stroke-width="1"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--indigo);">Dada <span class="devanagari" style="font-weight:400;">दादा</span></div>
+          <div style="color: var(--ink-soft); font-style: italic;">Senior architect. Drinks cutting chai. Has opinions.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(217, 119, 6, 0.15); border: 2px solid var(--saffron); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg viewBox="0 0 40 40" width="34" height="34">
+            <circle cx="20" cy="14" r="6" fill="none" stroke="#D97706" stroke-width="1.8"/>
+            <path d="M 14 13 Q 14 5 20 5 Q 26 5 26 13 L 28 18 L 20 16 L 12 18 Z" fill="#D97706" opacity="0.25"/>
+            <line x1="20" y1="20" x2="20" y2="32" stroke="#D97706" stroke-width="1.8"/>
+            <line x1="20" y1="23" x2="13" y2="27" stroke="#D97706" stroke-width="1.8"/>
+            <line x1="20" y1="23" x2="27" y2="26" stroke="#D97706" stroke-width="1.8"/>
+            <rect x="22" y="22" width="6" height="4" fill="none" stroke="#D97706" stroke-width="1.2"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--saffron);">Tanvi <span class="devanagari" style="font-weight:400;">तन्वी</span></div>
+          <div style="color: var(--ink-soft); font-style: italic;">Junior dev, Symbiosis grad, Pulsar rider. Learning fast.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(74, 93, 63, 0.15); border: 2px solid var(--moss); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg viewBox="0 0 40 40" width="34" height="34">
+            <circle cx="20" cy="14" r="6" fill="none" stroke="#4A5D3F" stroke-width="1.8"/>
+            <path d="M 14 11 Q 20 6 26 11 L 26 14 L 14 14 Z" fill="#4A5D3F" opacity="0.3"/>
+            <line x1="20" y1="20" x2="20" y2="32" stroke="#4A5D3F" stroke-width="1.8"/>
+            <line x1="20" y1="24" x2="14" y2="28" stroke="#4A5D3F" stroke-width="1.8"/>
+            <line x1="20" y1="24" x2="26" y2="28" stroke="#4A5D3F" stroke-width="1.8"/>
+            <circle cx="17" cy="14" r="0.8" fill="#4A5D3F"/>
+            <circle cx="23" cy="14" r="0.8" fill="#4A5D3F"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--moss);">Aaji <span class="devanagari" style="font-weight:400;">आजी</span></div>
+          <div style="color: var(--ink-soft); font-style: italic;">Grandmother of product sense. Asks <em>"mala samjaav"</em>.</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div style="width: 42px; height: 42px; border-radius: 50%; background: rgba(168, 50, 30, 0.15); border: 2px solid var(--terracotta); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <svg viewBox="0 0 40 40" width="34" height="34">
+            <path d="M 20 6 L 14 14 L 8 12 L 12 20 L 6 24 L 14 26 L 12 34 L 20 30 L 28 34 L 26 26 L 34 24 L 28 20 L 32 12 L 26 14 Z" fill="#A8321E" opacity="0.4" stroke="#A8321E" stroke-width="1.2"/>
+            <circle cx="16" cy="20" r="1.5" fill="#A8321E"/>
+            <circle cx="24" cy="20" r="1.5" fill="#A8321E"/>
+            <path d="M 15 26 Q 20 23 25 26" stroke="#A8321E" stroke-width="1.2" fill="none"/>
+            <path d="M 15 26 L 16 28 L 18 26 L 20 28 L 22 26 L 24 28 L 25 26" stroke="#A8321E" stroke-width="1" fill="none"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight: 600; color: var(--terracotta);">Bugasur <span class="devanagari" style="font-weight:400;">बगासुर</span></div>
+          <div style="color: var(--ink-soft); font-style: italic;">The bug-demon. Grows bigger the longer you ignore it.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== OPENING ========== -->
+  <section class="opening">
+    <p>It is Friday evening in Hinjewadi. The office is half-empty. Tanvi is wrapping up the last ticket of the sprint, already mentally at the vada pav stall outside Phase 1. Her code compiles. Her tests pass. She deploys to staging with the confidence of someone who has not yet met production.</p>
+
+    <p>On Monday morning, the Slack channel is on fire. The payment service is returning 504 Gateway Timeouts for customers trying to pay electricity bills. The DBA has sent three messages. None of them are friendly. The last one simply says: <em>"N+1."</em></p>
+
+    <p>Tanvi does not yet know what N+1 means. She is about to find out.</p>
+  </section>
+
+  <!-- Dialogue -->
+  <div class="dialogue dialogue-tanvi">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="16" r="7" fill="none" stroke="#D97706" stroke-width="2"/>
+        <path d="M 17 15 Q 17 6 24 6 Q 31 6 31 15 L 33 21 L 24 18 L 15 21 Z" fill="#D97706" opacity="0.25"/>
+        <line x1="24" y1="23" x2="24" y2="38" stroke="#D97706" stroke-width="2"/>
+        <line x1="24" y1="27" x2="16" y2="32" stroke="#D97706" stroke-width="2"/>
+        <line x1="24" y1="27" x2="32" y2="31" stroke="#D97706" stroke-width="2"/>
+        <rect x="26" y="26" width="8" height="5" fill="none" stroke="#D97706" stroke-width="1.5"/>
+        <circle cx="21" cy="16" r="1" fill="#D97706"/>
+        <circle cx="27" cy="16" r="1" fill="#D97706"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Tanvi <span class="devanagari">तन्वी</span> <span class="dialogue-role">(junior dev)</span></div>
+      <p>Dada, but my code is so clean! I'm just using <code>findAll()</code> and then <code>.stream().map()</code>. This is the modern way, no?</p>
+    </div>
+  </div>
+
+  <div class="dialogue dialogue-dada">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="16" r="7" fill="none" stroke="#2E3B5F" stroke-width="2"/>
+        <path d="M 17 10 Q 24 4 31 10" stroke="#2E3B5F" stroke-width="2" fill="none"/>
+        <line x1="24" y1="23" x2="24" y2="38" stroke="#2E3B5F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="17" y2="33" stroke="#2E3B5F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="31" y2="32" stroke="#2E3B5F" stroke-width="2"/>
+        <circle cx="21" cy="16" r="1.2" fill="#2E3B5F"/>
+        <circle cx="27" cy="16" r="1.2" fill="#2E3B5F"/>
+        <line x1="19" y1="20" x2="29" y2="20" stroke="#2E3B5F" stroke-width="1.2"/>
+        <path d="M 22 21 Q 24 23 26 21" stroke="#2E3B5F" stroke-width="1" fill="none"/>
+        <!-- chai cup -->
+        <rect x="32" y="30" width="6" height="6" fill="none" stroke="#2E3B5F" stroke-width="1.2"/>
+        <path d="M 38 32 Q 40 32 40 34 Q 40 35 38 35" stroke="#2E3B5F" stroke-width="1" fill="none"/>
+        <path d="M 34 28 Q 34 26 35 26 M 36 28 Q 36 26 37 26" stroke="#2E3B5F" stroke-width="0.8" fill="none" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Dada <span class="devanagari">दादा</span> <span class="dialogue-role">(architect, 15 yrs)</span></div>
+      <p>Tanvi, beta, listen. Clean code that hits the database 4,000 times is like a beautifully wrapped gift full of <em>bhel</em>. Looks great. Nobody wants it by Monday.</p>
+      <p>Let me show you.</p>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    Your ORM is not your friend. Treat it like a <em>paying guest</em> — useful, but watch them around the kitchen.
+    <span class="pullquote-attr">— Dada, probably</span>
+  </div>
+
+  <!-- ========== §1 N+1 ========== -->
+  <h2><span class="sect-num">§ 6.1</span>The N+1 <span class="devanagari">समस्या</span></h2>
+  <p class="subhead">Death by a Thousand Queries, or: IRCTC at 10:00:01 AM</p>
+
+  <p>You know Tatkal booking. 10 AM sharp. You've filled the passenger details, you've got your UPI ready, you click "Book Now" — and then spin, spin, spin, error. The IRCTC team, to their credit, have made enormous strides in recent years. But in the old days, one common failure mode was simple: a request that should have been <em>one</em> database query was actually <em>four hundred</em>.</p>
+
+  <p>Your code is doing the same thing. Right now.</p>
+
+  <figure>
+    <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="One query fans out into many follow-up queries to a crying database">
+      <defs>
+        <marker id="arrow-terr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8321E"/>
+        </marker>
+        <marker id="arrow-moss" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#4A5D3F"/>
+        </marker>
+      </defs>
+
+      <!-- App box -->
+      <rect x="30" y="100" width="140" height="70" rx="4" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1.5"/>
+      <text x="100" y="128" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600" fill="#1F1A14">Your Service</text>
+      <text x="100" y="146" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#4A3E2E" font-style="italic">still optimistic</text>
+
+      <!-- First query -->
+      <path d="M 170 125 L 240 125" stroke="#4A5D3F" stroke-width="2" marker-end="url(#arrow-moss)" fill="none"/>
+      <text x="205" y="117" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#4A5D3F">SELECT orders</text>
+
+      <!-- The fanout queries -->
+      <g stroke="#A8321E" stroke-width="1.5" fill="none" marker-end="url(#arrow-terr)">
+        <path d="M 170 135 Q 240 50 350 60"/>
+        <path d="M 170 135 Q 240 75 350 90"/>
+        <path d="M 170 135 Q 240 105 350 120"/>
+        <path d="M 170 140 Q 240 140 350 150"/>
+        <path d="M 170 145 Q 240 175 350 180"/>
+        <path d="M 170 150 Q 240 205 350 210"/>
+      </g>
+
+      <text x="250" y="50" font-family="JetBrains Mono" font-size="9" fill="#A8321E">SELECT customer WHERE id = 1</text>
+      <text x="270" y="135" font-family="JetBrains Mono" font-size="14" fill="#A8321E">⋯</text>
+      <text x="250" y="232" font-family="JetBrains Mono" font-size="9" fill="#A8321E">× 400 more times</text>
+
+      <!-- Database (crying) -->
+      <g transform="translate(440, 70)">
+        <ellipse cx="70" cy="22" rx="70" ry="14" fill="#2B2418"/>
+        <rect x="0" y="22" width="140" height="100" fill="#2B2418"/>
+        <ellipse cx="70" cy="122" rx="70" ry="14" fill="#2B2418"/>
+        <ellipse cx="70" cy="52" rx="70" ry="14" fill="none" stroke="#4A3E2E" stroke-width="1"/>
+        <ellipse cx="70" cy="82" rx="70" ry="14" fill="none" stroke="#4A3E2E" stroke-width="1"/>
+        <circle cx="54" cy="82" r="3" fill="#EDE2C7"/>
+        <circle cx="86" cy="82" r="3" fill="#EDE2C7"/>
+        <path d="M 52 102 Q 70 94 88 102" stroke="#EDE2C7" stroke-width="2" fill="none"/>
+        <path d="M 54 86 Q 52 94 54 100 Q 56 94 54 86 Z" fill="#8FB7E8"/>
+      </g>
+      <text x="510" y="215" text-anchor="middle" font-family="Fraunces" font-size="13" fill="#4A3E2E" font-style="italic">PostgreSQL, weeping into its chai</text>
+    </svg>
+    <figcaption><span class="fig-label">Fig. 6.1</span>One query to fetch the list, plus <em>n</em> queries to fetch each related record. The database does not file a complaint. It simply starts timing out during the next Tatkal rush.</figcaption>
+  </figure>
+
+  <!-- Case Study -->
+  <div class="case-study">
+    <div class="case-study-header">
+      <div class="case-study-header-left">
+        <svg class="case-study-icon" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6 L24 6 L22 20 L6 20 Z"/>
+          <circle cx="10" cy="23" r="2"/>
+          <circle cx="20" cy="23" r="2"/>
+          <line x1="4" y1="6" x2="2" y2="3"/>
+        </svg>
+        <div>
+          <div class="case-study-kicker">Case Study</div>
+          <div class="case-study-title">The Swiggy-Style Order Dashboard</div>
+        </div>
+      </div>
+      <span class="case-study-tag">#real-world</span>
+    </div>
+    <div class="case-study-body">
+      <p>A mid-sized Pune food-delivery startup — let's call them <em>QuickBhook</em> — built an internal operations dashboard showing all live orders. Each row needed the customer name, the restaurant name, and the delivery partner's name. The developer wrote, proudly:</p>
+
+<pre style="margin: 14px 0;"><code><span class="cm">// three lazy fields, one loop, four hundred rows</span>
+List&lt;Order&gt; orders = orderRepo.findAllByStatus(ACTIVE);
+<span class="kw">return</span> orders.stream().map(o -&gt; <span class="kw">new</span> Row(
+    o.getCustomer().getName(),      <span class="cm">// +1 query</span>
+    o.getRestaurant().getName(),    <span class="cm">// +1 query</span>
+    o.getDeliveryPartner().getName()<span class="cm">// +1 query</span>
+)).toList();</code></pre>
+
+      <p>On a dev machine with 12 orders, it loaded in 80 milliseconds. On the first production Friday night — a rainy Pune evening, peak dinner rush — the same endpoint tried to do <strong>1,201 queries per dashboard refresh.</strong> Every ops person refreshing every 10 seconds.</p>
+
+      <div class="case-study-stats">
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">1,201</div>
+          <div class="case-study-stat-label">queries per refresh</div>
+        </div>
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">8.3s</div>
+          <div class="case-study-stat-label">p99 latency</div>
+        </div>
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">100%</div>
+          <div class="case-study-stat-label">DB pool exhausted</div>
+        </div>
+      </div>
+
+      <p><strong>The fix took two lines.</strong> A single JPQL query with <code>JOIN FETCH</code>, returning a DTO. Response time dropped to 120ms. The ops team stopped filing tickets. The CTO stopped having opinions about the backend team.</p>
+    </div>
+  </div>
+
+  <h3>The Fix</h3>
+
+  <div class="compare">
+    <div class="bad">
+      <div class="header">☠ Nahi karne ka</div>
+      <p>Let Hibernate lazy-load its way into your next postmortem.</p>
+    </div>
+    <div class="good">
+      <div class="header">✦ Aise karo</div>
+      <p>Tell JPA exactly what you want, exactly once.</p>
+    </div>
+  </div>
+
+<pre><code><span class="cm">// DON'T — looks innocent, isn't</span>
+<span class="kw">public</span> List&lt;OrderSummary&gt; summaries() {
+    <span class="kw">return</span> orderRepo.findAll().stream()
+        .map(o -&gt; <span class="kw">new</span> OrderSummary(o.getId(), o.getCustomer().getName()))
+        <span class="cm">//                             ^ LAZY FETCH. ONE QUERY PER ORDER.</span>
+        .toList();
+}
+
+<span class="cm">// DO — one query, grown-up behaviour</span>
+<span class="an">@Query</span>(<span class="st">"""
+    SELECT new com.quickbhook.OrderSummary(o.id, c.name, r.name, p.name)
+    FROM Order o
+    JOIN o.customer c
+    JOIN o.restaurant r
+    JOIN o.deliveryPartner p
+    WHERE o.status = :status
+    """</span>)
+List&lt;OrderSummary&gt; findActiveSummaries(<span class="an">@Param</span>(<span class="st">"status"</span>) Status status);</code></pre>
+
+  <div class="callout callout-tip">
+    <span class="callout-label">Dada's tip</span>
+    Write an integration test that counts SQL statements using <code>hibernate.getStatistics()</code>. Fail the build if a known endpoint exceeds its query budget. N+1 doesn't announce itself in code review — it announces itself during the CEO demo.
+  </div>
+
+  <!-- ========== §2 OSIV ========== -->
+  <h2><span class="sect-num">§ 6.2</span>Open Session In View</h2>
+  <p class="subhead">The Setting That Ate Your Long Weekend</p>
+
+  <p>Spring Boot, being a helpful boy, turns on a setting called <code>spring.jpa.open-in-view</code> by default. It means well. It keeps your Hibernate session open for the entire HTTP request — through the controller, through JSON rendering, through the network send to the client.</p>
+
+  <p>It is the rishtedar who came for Diwali and is still on your sofa in January. You were polite at first. You are no longer polite. But they are comfortable, and they are holding your last database connection hostage.</p>
+
+  <div class="dialogue dialogue-aaji">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="16" r="7" fill="none" stroke="#4A5D3F" stroke-width="2"/>
+        <path d="M 17 12 Q 24 7 31 12 L 31 16 L 17 16 Z" fill="#4A5D3F" opacity="0.3"/>
+        <line x1="24" y1="23" x2="24" y2="38" stroke="#4A5D3F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="17" y2="33" stroke="#4A5D3F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="31" y2="33" stroke="#4A5D3F" stroke-width="2"/>
+        <circle cx="21" cy="16" r="0.9" fill="#4A5D3F"/>
+        <circle cx="27" cy="16" r="0.9" fill="#4A5D3F"/>
+        <path d="M 21 20 Q 24 22 27 20" stroke="#4A5D3F" stroke-width="1" fill="none"/>
+        <line x1="14" y1="18" x2="16" y2="19" stroke="#4A5D3F" stroke-width="0.8"/>
+        <line x1="14" y1="20" x2="16" y2="20" stroke="#4A5D3F" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Aaji <span class="devanagari">आजी</span> <span class="dialogue-role">(asking the real questions)</span></div>
+      <p>Beta, if you are not using the connection, why are you holding it? In my time, if you held the phone line for four hours, your brother-in-law would hear about it.</p>
+    </div>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Timeline showing connection held for the whole request with OSIV vs. held briefly without">
+      <line x1="40" y1="130" x2="600" y2="130" stroke="#1F1A14" stroke-width="1.5"/>
+      <line x1="40" y1="125" x2="40" y2="135" stroke="#1F1A14" stroke-width="1.5"/>
+      <line x1="600" y1="125" x2="600" y2="135" stroke="#1F1A14" stroke-width="1.5"/>
+
+      <rect x="40" y="70" width="100" height="50" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1"/>
+      <text x="90" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600">Controller</text>
+      <text x="90" y="108" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#4A3E2E">parsing</text>
+
+      <rect x="140" y="70" width="160" height="50" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1"/>
+      <text x="220" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600">Service</text>
+      <text x="220" y="108" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#4A3E2E">DB work here</text>
+
+      <rect x="300" y="70" width="140" height="50" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1"/>
+      <text x="370" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600">Jackson</text>
+      <text x="370" y="108" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#4A3E2E">JSON serialize</text>
+
+      <rect x="440" y="70" width="160" height="50" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1"/>
+      <text x="520" y="92" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600">Wire + Client</text>
+      <text x="520" y="108" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#4A3E2E">slow 4G, who knows</text>
+
+      <rect x="40" y="145" width="560" height="18" fill="#A8321E" opacity="0.85"/>
+      <text x="320" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#F5EFE0">CONNECTION HELD  (open-in-view: true, the default) ☠</text>
+
+      <rect x="140" y="28" width="160" height="18" fill="#4A5D3F" opacity="0.85"/>
+      <text x="220" y="41" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#F5EFE0">CONNECTION HELD  (sane) ✦</text>
+
+      <text x="40" y="180" font-family="Fraunces" font-size="11" font-style="italic" fill="#4A3E2E">t = 0</text>
+      <text x="600" y="180" text-anchor="end" font-family="Fraunces" font-size="11" font-style="italic" fill="#4A3E2E">t = response sent</text>
+    </svg>
+    <figcaption><span class="fig-label">Fig. 6.2</span>Green = when a DB connection <em>should</em> be held. Red = OSIV, the default. One of these will not wake you at 3 AM.</figcaption>
+  </figure>
+
+  <p>Now imagine you have a HikariCP pool of 20 connections, each HTTP request holds one for 800ms (because your mobile user is on 3G in a basement in Kothrud), and suddenly 500 requests arrive per second. The math does not work. The math never works. The math is why you are on-call.</p>
+
+  <p><strong>The fix is one line of YAML.</strong></p>
+
+<pre><code><span class="cm"># application.yml — first thing you add to every new service</span>
+<span class="kw">spring:</span>
+  <span class="kw">jpa:</span>
+    <span class="kw">open-in-view:</span> <span class="st">false</span>   <span class="cm"># always. forever. no exceptions.</span></code></pre>
+
+  <div class="callout callout-horror">
+    <span class="callout-label">Real horror story</span>
+    A Pune-based payments team turned this off exactly once. The service threw 14 <code>LazyInitializationException</code>s they had been unknowingly ignoring for 18 months. The "workaround" had been a note in the admin panel that said "please don't click that button." The compliance team had been clicking that button. Daily.
+  </div>
+
+  <!-- ========== §3 Entities as DTOs ========== -->
+  <h2><span class="sect-num">§ 6.3</span>Entities Are Not DTOs</h2>
+  <p class="subhead">A Serialization Tragedy in Three Acts</p>
+
+  <p>Picture this. You return a JPA entity directly from your controller, because why not, it has all the data right there. Jackson begins to serialize it. The <code>Order</code> has a <code>customer</code>, who has a <code>List&lt;Order&gt;</code>, and each of those orders has a <code>customer</code>, who has a <code>List&lt;Order&gt;</code>, and —</p>
+
+  <figure>
+    <svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Recursive JSON spiral">
+      <g transform="translate(320, 130)">
+        <g font-family="JetBrains Mono" font-size="12" fill="#1F1A14">
+          <text x="0" y="-100" text-anchor="middle">{ "order": {</text>
+          <text x="70" y="-75" text-anchor="middle">"customer": {</text>
+          <text x="110" y="-45" text-anchor="middle" font-size="11">"orders": [{</text>
+          <text x="120" y="-15" text-anchor="middle" font-size="10">"customer": {</text>
+          <text x="110" y="10" text-anchor="middle" font-size="9">"orders": [{</text>
+          <text x="90" y="30" text-anchor="middle" font-size="8" fill="#A8321E">"customer": {</text>
+          <text x="60" y="45" text-anchor="middle" font-size="7" fill="#A8321E">"orders":</text>
+          <text x="20" y="55" text-anchor="middle" font-size="6" fill="#A8321E">...</text>
+        </g>
+        <path d="M 0 -100 Q 150 -100 130 -30 Q 100 40 -30 55 Q -140 50 -100 -70 Q -50 -130 50 -110"
+              stroke="#A8321E" stroke-width="1.5" fill="none" opacity="0.4" stroke-dasharray="3,3"/>
+      </g>
+      <text x="320" y="240" text-anchor="middle" font-family="Fraunces" font-size="14" font-style="italic" fill="#4A3E2E">StackOverflowError: the call is coming from inside the graph</text>
+    </svg>
+    <figcaption><span class="fig-label">Fig. 6.3</span>Bidirectional relationships plus naive serialization equals a log file the size of the Mahabharata.</figcaption>
+  </figure>
+
+  <p>Even if you survive with <code>@JsonIgnore</code>, you've now welded your API contract to your database schema. When the DBA renames a column, the Android app breaks at 11 PM on a Saturday. When the iOS team needs a new field, you touch your database. <em>Mubarak ho</em> — you've built a distributed monolith with extra steps.</p>
+
+<pre><code><span class="cm">// DON'T — entity going out over the wire</span>
+<span class="an">@GetMapping</span>(<span class="st">"/orders/{id}"</span>)
+<span class="kw">public</span> <span class="ty">OrderEntity</span> get(<span class="an">@PathVariable</span> UUID id) {
+    <span class="kw">return</span> orderRepo.findById(id).orElseThrow();
+}
+
+<span class="cm">// DO — purpose-built DTO, API-shaped</span>
+<span class="an">@GetMapping</span>(<span class="st">"/orders/{id}"</span>)
+<span class="kw">public</span> <span class="ty">OrderResponse</span> get(<span class="an">@PathVariable</span> UUID id) {
+    <span class="kw">return</span> orderService.findById(id);
+}
+
+<span class="kw">public record</span> <span class="ty">OrderResponse</span>(
+    UUID id,
+    BigDecimal amount,
+    String currency,
+    String customerName,
+    Instant placedAt
+) {}</code></pre>
+
+  <!-- ========== §4 @Transactional ========== -->
+  <h2><span class="sect-num">§ 6.4</span>@Transactional</h2>
+  <p class="subhead">Kahan lagana hai, kahan nahi</p>
+
+  <figure>
+    <svg viewBox="0 0 640 280" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Transactional belongs on the service layer">
+      <rect x="40" y="30" width="170" height="70" rx="4" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1.5"/>
+      <text x="125" y="58" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600">Controller</text>
+      <text x="125" y="78" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#A8321E">@Transactional ☠</text>
+      <text x="125" y="92" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#4A3E2E" font-style="italic">nahi, wrong floor</text>
+
+      <path d="M 125 100 L 125 125" stroke="#1F1A14" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+      <rect x="20" y="125" width="210" height="130" rx="4" fill="none" stroke="#4A5D3F" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="125" y="145" text-anchor="middle" font-family="Fraunces" font-size="11" font-style="italic" fill="#4A5D3F">transaction boundary</text>
+
+      <rect x="40" y="155" width="170" height="70" rx="4" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1.5"/>
+      <text x="125" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600">Service</text>
+      <text x="125" y="203" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#4A5D3F">@Transactional ✦</text>
+      <text x="125" y="217" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#4A3E2E" font-style="italic">haan, yahan</text>
+
+      <path d="M 230 190 L 320 90" stroke="#1F1A14" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <path d="M 230 190 L 320 190" stroke="#1F1A14" stroke-width="1.5" marker-end="url(#arr1)"/>
+      <path d="M 230 200 L 320 280" stroke="#A8321E" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+
+      <rect x="320" y="55" width="170" height="70" rx="4" fill="#ECE3CE" stroke="#1F1A14" stroke-width="1.5"/>
+      <text x="405" y="83" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600">Repository</text>
+      <text x="405" y="102" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#4A3E2E">joins existing tx ✦</text>
+
+      <rect x="320" y="155" width="200" height="70" rx="4" fill="#ECE3CE" stroke="#A8321E" stroke-width="1.5"/>
+      <text x="420" y="183" text-anchor="middle" font-family="IBM Plex Sans" font-size="14" font-weight="600">HTTP / Kafka call</text>
+      <text x="420" y="203" text-anchor="middle" font-family="Fraunces" font-size="11" fill="#A8321E" font-style="italic">NEVER inside a tx</text>
+      <text x="420" y="217" text-anchor="middle" font-family="Fraunces" font-size="10" fill="#4A3E2E" font-style="italic">(holds DB locks waiting)</text>
+
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#1F1A14"/>
+        </marker>
+        <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#A8321E"/>
+        </marker>
+      </defs>
+    </svg>
+    <figcaption><span class="fig-label">Fig. 6.4</span>Transactions start at the service layer, end at the service layer, and never — under any circumstances — wrap an external HTTP call.</figcaption>
+  </figure>
+
+  <h3>The Three Sins of @Transactional</h3>
+
+  <p><strong>Sin the first:</strong> calling a <code>@Transactional</code> method from inside the same class. Spring's proxy does not intercept same-class calls. Your annotation is a decoration. It is, at best, aspirational.</p>
+
+  <p><strong>Sin the second:</strong> putting it on the controller. The controller should not know what a transaction is. Also, if an exception escapes your error handler, you are now rendering an error response inside a doomed transaction. Very exciting.</p>
+
+  <p><strong>Sin the third — and this is the big one:</strong> calling Kafka, HTTP, email, the fraud API, or PayGlocal-whoever from <em>inside</em> a transaction. You are now holding database row locks while waiting for someone else's server to respond. If their server is slow, your database is slow. If their server is down, so are you.</p>
+
+  <!-- UPI case study -->
+  <div class="case-study">
+    <div class="case-study-header">
+      <div class="case-study-header-left">
+        <svg class="case-study-icon" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="4" y="6" width="20" height="16" rx="2"/>
+          <line x1="4" y1="11" x2="24" y2="11"/>
+          <line x1="8" y1="17" x2="14" y2="17"/>
+        </svg>
+        <div>
+          <div class="case-study-kicker">Case Study</div>
+          <div class="case-study-title">The UPI-Style Payment That Deadlocked Everything</div>
+        </div>
+      </div>
+      <span class="case-study-tag">#payments</span>
+    </div>
+    <div class="case-study-body">
+      <p>A fintech in Viman Nagar processes UPI-like payment intents. Their submit flow was, roughly:</p>
+
+<pre style="margin: 14px 0;"><code><span class="an">@Transactional</span>
+<span class="kw">public</span> PaymentResult submit(PaymentCommand cmd) {
+    Payment p = paymentRepo.save(Payment.from(cmd));
+    fraudClient.check(p);                    <span class="cm">// HTTP → fraud service, 1.2s avg</span>
+    notificationClient.sendSms(p);           <span class="cm">// HTTP → SMS provider, 600ms</span>
+    kafkaTemplate.send(<span class="st">"payments"</span>, p.asEvent()); <span class="cm">// sync Kafka send</span>
+    <span class="kw">return</span> PaymentResult.accepted(p);
+}</code></pre>
+
+      <p>On a normal Tuesday: fine. On a Friday evening when the SMS provider had a regional outage and calls started taking 30 seconds to time out: the DB connection pool exhausted in 90 seconds. Every payment submission was holding a locked row on the <code>payment_idempotency</code> table, waiting for an SMS they would never successfully send.</p>
+
+      <div class="case-study-stats">
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">90s</div>
+          <div class="case-study-stat-label">to full outage</div>
+        </div>
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">₹2.4 Cr</div>
+          <div class="case-study-stat-label">transactions queued</div>
+        </div>
+        <div class="case-study-stat">
+          <div class="case-study-stat-num">4h 12m</div>
+          <div class="case-study-stat-label">RCA before fix</div>
+        </div>
+      </div>
+
+      <p><strong>The fix was the transactional outbox pattern.</strong> Inside the transaction, save the payment and write an <code>outbox_event</code> row. Commit. A separate background worker reads the outbox and does the actual HTTP / Kafka / SMS work. The transaction holds a DB lock for milliseconds, not half a minute. The next SMS provider outage came and went; nobody noticed.</p>
+    </div>
+  </div>
+
+<pre><code><span class="an">@Transactional</span>
+<span class="kw">public</span> PaymentResult submit(PaymentCommand cmd) {
+    Payment p = paymentRepo.save(Payment.from(cmd));
+    outboxRepo.save(OutboxEvent.paymentSubmitted(p));   <span class="cm">// same tx</span>
+    <span class="cm">// NO network calls here</span>
+    <span class="kw">return</span> PaymentResult.accepted(p);
+}
+<span class="cm">// A separate @Scheduled poller (or Debezium CDC) drains the outbox</span>
+<span class="cm">// and makes the actual HTTP / Kafka / SMS calls. Retries. Idempotent.</span></code></pre>
+
+  <div class="callout callout-wisdom">
+    <span class="callout-label">Dada's rule</span>
+    A transaction is a database thing, not a business thing. It starts when you need to change data, ends when you have changed it, and lasts as briefly as it possibly can. Anything longer is borrowing trouble.
+  </div>
+
+  <!-- ========== §5 Lombok ========== -->
+  <h2><span class="sect-num">§ 6.5</span>Lombok + JPA</h2>
+  <p class="subhead">A Love Story That Ends in StackOverflowError</p>
+
+  <p>You put <code>@Data</code> on your JPA entity. Lombok happily generates <code>equals()</code>, <code>hashCode()</code>, and <code>toString()</code>. These dutifully reference every field. Including the <code>List&lt;Child&gt;</code> which references its parent, which references the list, which references —</p>
+
+  <div class="dialogue dialogue-bugasur">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <path d="M 24 6 L 17 16 L 9 14 L 14 22 L 7 27 L 16 30 L 14 40 L 24 35 L 34 40 L 32 30 L 41 27 L 34 22 L 39 14 L 31 16 Z" fill="#A8321E" opacity="0.5" stroke="#A8321E" stroke-width="1.4"/>
+        <circle cx="19" cy="23" r="2" fill="#A8321E"/>
+        <circle cx="29" cy="23" r="2" fill="#A8321E"/>
+        <path d="M 18 30 L 19 32 L 21 30 L 23 32 L 25 30 L 27 32 L 29 30 L 30 32" stroke="#A8321E" stroke-width="1.2" fill="none"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Bugasur <span class="devanagari">बगासुर</span> <span class="dialogue-role">(cackling from the stack trace)</span></div>
+      <p>MUAHAHA! <em>Maine toString call kiya aur tumhari JVM 47,000 lines print karke reh gayi!</em> Your logger is now writing the great Indian epic to stdout!</p>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div class="bad">
+      <div class="header">☠ Don't</div>
+<pre style="margin:8px 0 0 0; font-size:12px; padding:12px;"><code><span class="an">@Data</span>
+<span class="an">@Entity</span>
+<span class="kw">public class</span> <span class="ty">Customer</span> {
+  <span class="an">@Id</span> UUID id;
+  <span class="an">@OneToMany</span>
+  List&lt;Order&gt; orders;
+}
+<span class="cm">// toString → infinite loop</span>
+<span class="cm">// equals → loads full graph</span></code></pre>
+    </div>
+    <div class="good">
+      <div class="header">✦ Do</div>
+<pre style="margin:8px 0 0 0; font-size:12px; padding:12px;"><code><span class="an">@Getter</span> <span class="an">@Setter</span>
+<span class="an">@Entity</span>
+<span class="kw">public class</span> <span class="ty">Customer</span> {
+  <span class="an">@Id</span> UUID id;
+  <span class="an">@OneToMany</span>
+  List&lt;Order&gt; orders;
+
+  <span class="cm">// equals/hashCode by @Id only</span>
+}</code></pre>
+    </div>
+  </div>
+
+  <p>Equality for entities is based on the <strong>identifier</strong>, not the field graph. Two <code>Customer</code> instances with the same ID are the same customer, even if one has a stale email and the other has the latest. Write your own <code>equals</code>/<code>hashCode</code> based on ID alone. It is six lines. It is worth it.</p>
+
+  <!-- ========== §6 GALLERY OF HORRORS ========== -->
+  <h2><span class="sect-num">§ 6.6</span>The Gallery of Horrors</h2>
+  <p class="subhead">Mistakes we have, <em>personally</em>, shipped to production</p>
+
+  <div class="horror-item">
+    <h4>1 &nbsp; save() in a loop <span class="hindi">— ek ek karke</span></h4>
+    <p>You iterate 10,000 rows and call <code>repository.save()</code> each time. Each save is its own flush, its own round trip, its own tiny heartbreak. Use <code>saveAll()</code> with <code>hibernate.jdbc.batch_size=50</code>, or skip JPA for bulk work and use JDBC. Your 40-minute nightly import becomes 40 seconds. Your batch job stops being on the morning standup agenda.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>2 &nbsp; No @Version <span class="hindi">— lost updates ki kahaani</span></h4>
+    <p>Two ops users update the same customer record at the same time from different screens. The second write silently overwrites the first. Your integration tests are green. Your user is in the hold queue complaining their KYC status reverted. Add <code>@Version Long version</code>, handle <code>OptimisticLockException</code>, tell the user to retry.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>3 &nbsp; CascadeType.ALL by default <span class="hindi">— jo ek ka, wahi sab ka</span></h4>
+    <p>You delete a customer. Cascade deletes every order. Cascade deletes every payment. Cascade deletes every audit log. The RBI auditor calls. <code>CascadeType.ALL</code> is not a default; it is a decision. Declare cascades per-relationship, and never for anything audit-bearing.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>4 &nbsp; findById → modify → save <span class="hindi">— teesra step bekar hai</span></h4>
+    <p>Inside a transaction, entities loaded are already <em>managed</em>. Modifying a field is enough — Hibernate dirty-checks on commit. The explicit <code>save()</code> is theatre. It doesn't hurt, but it's also the reason the next dev thinks save() means "persist now." It does not.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>5 &nbsp; @ManyToMany without a join entity <span class="hindi">— kal pachtaoge</span></h4>
+    <p>The join table has no fields today. Next sprint, product needs an <code>addedBy</code> column and a <code>addedAt</code> timestamp. Now you're doing a schema migration on 40 million rows at 11 PM on a Thursday. Model the join as its own entity from day one. Always.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>6 &nbsp; Forgetting readOnly = true <span class="hindi">— replica ka kaam primary pe</span></h4>
+    <p>Read queries marked <code>@Transactional(readOnly = true)</code> skip Hibernate's dirty-check machinery and can be routed to read replicas. Most people never set it. Most people then wonder why their read traffic hammers the primary database into submission during Big Billion Day.</p>
+  </div>
+
+  <div class="horror-item">
+    <h4>7 &nbsp; Logging the entity <span class="hindi">— PAN card with your morning logs</span></h4>
+    <p><code>log.info("saved customer: {}", customer)</code> — where <code>customer</code> helpfully triggers lazy loads of every relationship AND prints the PAN, Aadhaar, and IBAN into Splunk. Now it's 2 AM, compliance wants the logs purged, and you're writing a data-breach report on Diwali weekend. Mask with a Jackson mixin. Override <code>toString()</code>. Do not — ever — log the whole entity.</p>
+  </div>
+
+  <!-- ========== §7 CHECKLIST ========== -->
+  <h2><span class="sect-num">§ 6.7</span>The Survival Checklist</h2>
+  <p class="subhead">Pin it above your monitor. Tape it to the fridge.</p>
+
+  <div class="checklist">
+    <h3>Before merging any JPA code — <span class="devanagari" style="font-weight: 400; font-style: italic;">merge karne se pehle</span></h3>
+    <ul>
+      <li><code>spring.jpa.open-in-view: false</code> is set in your YAML</li>
+      <li>No entity leaves the service layer — DTOs or records only</li>
+      <li>Every fetch has an explicit strategy (<code>JOIN FETCH</code>, <code>@EntityGraph</code>, or a separate query)</li>
+      <li>Query count is tested for list endpoints — a budget, not a wish</li>
+      <li><code>@Transactional</code> is on the service, never on controllers or private methods</li>
+      <li>No HTTP, Kafka, email, or external API calls inside any transaction</li>
+      <li>Read-only queries are marked <code>readOnly = true</code></li>
+      <li><code>@Version</code> is present on any entity updatable by more than one actor</li>
+      <li>No <code>@Data</code> on entities — <code>@Getter @Setter</code> with ID-based <code>equals</code>/<code>hashCode</code></li>
+      <li>Bulk writes use <code>saveAll()</code> + batching, not <code>save()</code> in a loop</li>
+      <li>Cascades declared per-relationship, never <code>CascadeType.ALL</code> by habit</li>
+      <li>No entity is logged via <code>toString()</code> — PII and lazy loads are waiting to bite</li>
+    </ul>
+  </div>
+
+  <!-- ========== CHAIWALA WISDOM ========== -->
+  <div class="dialogue dialogue-chaiwala">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="15" r="7" fill="none" stroke="#B88A3C" stroke-width="2"/>
+        <path d="M 17 12 Q 17 5 24 5 Q 31 5 31 12" stroke="#B88A3C" stroke-width="2" fill="none"/>
+        <line x1="24" y1="22" x2="24" y2="36" stroke="#B88A3C" stroke-width="2"/>
+        <line x1="24" y1="26" x2="15" y2="32" stroke="#B88A3C" stroke-width="2"/>
+        <line x1="24" y1="26" x2="33" y2="30" stroke="#B88A3C" stroke-width="2"/>
+        <circle cx="21" cy="15" r="1" fill="#B88A3C"/>
+        <circle cx="27" cy="15" r="1" fill="#B88A3C"/>
+        <path d="M 20 20 Q 24 22 28 20" stroke="#B88A3C" stroke-width="1" fill="none"/>
+        <!-- kettle -->
+        <ellipse cx="35" cy="30" rx="5" ry="3" fill="none" stroke="#B88A3C" stroke-width="1.4"/>
+        <rect x="30" y="27" width="10" height="6" fill="none" stroke="#B88A3C" stroke-width="1.4"/>
+        <path d="M 40 28 Q 42 28 42 30" stroke="#B88A3C" stroke-width="1" fill="none"/>
+        <path d="M 33 22 Q 33 20 34 20 M 36 22 Q 36 20 37 20" stroke="#B88A3C" stroke-width="0.8" fill="none" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Chaiwala Bhau <span class="dialogue-role">(office canteen, 4:30 PM)</span></div>
+      <p>Bhau, everyone comes running to me when production is down. I tell them the same thing I tell you: the database remembers everything. Your code is just borrowing. <em>Kam lo, jaldi lauta do.</em> One cutting chai?</p>
+    </div>
+  </div>
+
+  <div class="pullquote">
+    Most JPA problems are not JPA problems. They are <em>"I forgot what was in the box"</em> problems.
+  </div>
+
+  <p>JPA is a tool that assumes you are paying attention. Pay attention. Use its boring, well-understood patterns. Question every default it gives you. And when something in production seems slow, the answer is almost always the same three words, muttered through gritted teeth at 3 AM:</p>
+
+  <p style="text-align:center; font-family: 'Fraunces', serif; font-size: 30px; font-style: italic; color: var(--terracotta); margin: 32px 0;">"It's the queries."</p>
+
+  <p>It is always the queries.</p>
+
+  <!-- Final dialogue -->
+  <div class="dialogue dialogue-tanvi">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="16" r="7" fill="none" stroke="#D97706" stroke-width="2"/>
+        <path d="M 17 15 Q 17 6 24 6 Q 31 6 31 15 L 33 21 L 24 18 L 15 21 Z" fill="#D97706" opacity="0.25"/>
+        <line x1="24" y1="23" x2="24" y2="38" stroke="#D97706" stroke-width="2"/>
+        <line x1="24" y1="27" x2="16" y2="32" stroke="#D97706" stroke-width="2"/>
+        <line x1="24" y1="27" x2="32" y2="31" stroke="#D97706" stroke-width="2"/>
+        <circle cx="21" cy="16" r="1" fill="#D97706"/>
+        <circle cx="27" cy="16" r="1" fill="#D97706"/>
+        <path d="M 21 20 Q 24 22 27 20" stroke="#D97706" stroke-width="1" fill="none"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Tanvi <span class="devanagari">तन्वी</span></div>
+      <p>Dada… I just checked. We have <code>open-in-view: true</code> in <strong>six</strong> of our services.</p>
+    </div>
+  </div>
+
+  <div class="dialogue dialogue-dada">
+    <div class="dialogue-avatar">
+      <svg viewBox="0 0 48 48">
+        <circle cx="24" cy="16" r="7" fill="none" stroke="#2E3B5F" stroke-width="2"/>
+        <path d="M 17 10 Q 24 4 31 10" stroke="#2E3B5F" stroke-width="2" fill="none"/>
+        <line x1="24" y1="23" x2="24" y2="38" stroke="#2E3B5F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="17" y2="33" stroke="#2E3B5F" stroke-width="2"/>
+        <line x1="24" y1="27" x2="31" y2="32" stroke="#2E3B5F" stroke-width="2"/>
+        <circle cx="21" cy="16" r="1.2" fill="#2E3B5F"/>
+        <circle cx="27" cy="16" r="1.2" fill="#2E3B5F"/>
+        <line x1="19" y1="20" x2="29" y2="20" stroke="#2E3B5F" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="dialogue-body">
+      <div class="dialogue-name">Dada <span class="devanagari">दादा</span></div>
+      <p><em>(sighs, takes a long sip of chai)</em></p>
+      <p>Tanvi, <em>chal, kaam pe lagte hain.</em></p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="chapter-footer">
+    <div class="footer-ornament">❦ ❦ ❦</div>
+    <p class="footer-text">
+      End of Chapter Six.<br>
+      Next: <em>Microservices — or, How to Have Problems on Purpose.</em>
+    </p>
+  </footer>
+
+</div>
+
+</body>
+</html>
