@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>System Design Drama</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 260px;
+      background: #1e1e1e;
+      color: white;
+      height: 100vh;
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.3);
+    }
+
+    #sidebar h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 10px;
+    }
+
+    #sidebar a {
+      display: block;
+      padding: 12px;
+      margin: 8px 0;
+      text-decoration: none;
+      color: #ddd;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    #sidebar a:hover {
+      background: #333;
+      color: white;
+    }
+
+    /* Content */
+    #content {
+      flex: 1;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+    }
+
+    /* Optional: basic copy protection */
+    body {
+      user-select: none;
+    }
+  </style>
+</head>
+
+<body oncontextmenu="return false">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2>📘 System Design Comics</h2>
+
+    <a onclick="loadPage('SpringBootJPA.html')">
+      📖 Episode 1: The Query That Ate Production
+    </a>
+
+    <a onclick="loadPage('CacheDesign.html')">
+      ⚡ Episode 2: Cache Me Outside
+    </a>
+
+  </div>
+
+  <!-- Content -->
+  <div id="content">
+    <iframe id="viewer" src="SpringBootJPA.html"></iframe>
+  </div>
+
+  <script>
+    function loadPage(page) {
+      document.getElementById('viewer').src = page;
+    }
+  </script>
+
+</body>
+</html>
